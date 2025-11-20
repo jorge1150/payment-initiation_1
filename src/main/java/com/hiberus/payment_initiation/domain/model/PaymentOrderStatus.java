@@ -1,14 +1,14 @@
 package com.hiberus.payment_initiation.domain.model;
 
 /**
- * Placeholder for the lifecycle states defined by BIAN Payment Initiation.
- * TODO: Align values with canonical taxonomy once available.
+ * Lifecycle states of a Payment Order aligned with BIAN Payment Initiation / PaymentOrder.
+ * These values match the OpenAPI contract enum.
  */
 public enum PaymentOrderStatus {
-	DRAFT,
-	VALIDATED,
-	SUBMITTED,
-	EXECUTED,
-	REJECTED
+	INITIATED,
+	PENDING,
+	ACCEPTED,
+	REJECTED,
+	SETTLED
 }
 

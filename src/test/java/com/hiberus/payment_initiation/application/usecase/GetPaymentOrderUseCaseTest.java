@@ -1,7 +1,9 @@
 package com.hiberus.payment_initiation.application.usecase;
 
 import com.hiberus.payment_initiation.domain.model.PaymentOrder;
+import com.hiberus.payment_initiation.domain.model.PaymentOrderStatus;
 import com.hiberus.payment_initiation.domain.port.PaymentOrderRepository;
+import com.hiberus.payment_initiation.shared.exception.DomainException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,31 +36,50 @@ class GetPaymentOrderUseCaseTest {
 		String paymentOrderId = "PO-123";
 		PaymentOrder paymentOrder = PaymentOrder.builder()
 				.id(paymentOrderId)
+				.status(PaymentOrderStatus.INITIATED)
 				.build();
 
 		when(paymentOrderRepository.findById(paymentOrderId)).thenReturn(Optional.of(paymentOrder));
 
 		// When
-		Optional<PaymentOrder> result = getPaymentOrderUseCase.execute(paymentOrderId);
+		PaymentOrder result = getPaymentOrderUseCase.getById(paymentOrderId);
 
 		// Then
-		assertThat(result).isPresent();
-		assertThat(result.get().getId()).isEqualTo(paymentOrderId);
+		assertThat(result).isNotNull();
+		assertThat(result.getId()).isEqualTo(paymentOrderId);
 		verify(paymentOrderRepository).findById(paymentOrderId);
 	}
 
 	@Test
-	void shouldReturnEmptyWhenPaymentOrderNotFound() {
+	void shouldThrowExceptionWhenPaymentOrderNotFound() {
 		// Given
 		String paymentOrderId = "PO-999";
 
 		when(paymentOrderRepository.findById(paymentOrderId)).thenReturn(Optional.empty());
 
+		// When/Then
+		assertThatThrownBy(() -> getPaymentOrderUseCase.getById(paymentOrderId))
+				.isInstanceOf(DomainException.class)
+				.hasMessageContaining("Payment order not found");
+		verify(paymentOrderRepository).findById(paymentOrderId);
+	}
+
+	@Test
+	void shouldReturnStatusWhenPaymentOrderFound() {
+		// Given
+		String paymentOrderId = "PO-123";
+		PaymentOrder paymentOrder = PaymentOrder.builder()
+				.id(paymentOrderId)
+				.status(PaymentOrderStatus.PENDING)
+				.build();
+
+		when(paymentOrderRepository.findById(paymentOrderId)).thenReturn(Optional.of(paymentOrder));
+
 		// When
-		Optional<PaymentOrder> result = getPaymentOrderUseCase.execute(paymentOrderId);
+		PaymentOrderStatus result = getPaymentOrderUseCase.getStatusById(paymentOrderId);
 
 		// Then
-		assertThat(result).isEmpty();
+		assertThat(result).isEqualTo(PaymentOrderStatus.PENDING);
 		verify(paymentOrderRepository).findById(paymentOrderId);
 	}
 }

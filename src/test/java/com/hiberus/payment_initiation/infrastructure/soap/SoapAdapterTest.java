@@ -29,7 +29,7 @@ class SoapAdapterTest {
 
 		// Then
 		assertThat(status).isNotNull();
-		assertThat(status).isEqualTo(PaymentOrderStatus.DRAFT);
+		assertThat(status).isEqualTo(PaymentOrderStatus.INITIATED);
 	}
 
 	@Test
@@ -44,7 +44,7 @@ class SoapAdapterTest {
 
 		// Then
 		assertThat(status1).isEqualTo(status2);
-		assertThat(status1).isEqualTo(PaymentOrderStatus.DRAFT);
+		assertThat(status1).isEqualTo(PaymentOrderStatus.INITIATED);
 	}
 }
 
