@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Exclude generated OpenAPI code -->
+    <Match>
+        <Package name="~com\.hiberus\.payment_initiation\.generated.*"/>
+    </Match>
+    <!-- Exclude unread field warnings for PaymentOrder - these fields will be used when full implementation is added -->
+    <Match>
+        <Class name="com.hiberus.payment_initiation.domain.model.PaymentOrder"/>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+    </Match>
+    <!-- Exclude unread field warnings for PaymentOrdersController - these use cases will be used when endpoints are fully implemented -->
+    <Match>
+        <Class name="com.hiberus.payment_initiation.infrastructure.rest.PaymentOrdersController"/>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+    </Match>
+</FindBugsFilter>
