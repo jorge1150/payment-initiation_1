@@ -1,0 +1,31 @@
+# Build outputs
+/target/
+/.mvn/wrapper/maven-wrapper.jar
+.mvn/
+
+# IDE metadata
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.factorypath
+.vscode/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Compiled classes & archives
+*.class
+*.jar
+*.war
+*.ear
+
+# Others
+hs_err_pid*
+replay_pid*
+
