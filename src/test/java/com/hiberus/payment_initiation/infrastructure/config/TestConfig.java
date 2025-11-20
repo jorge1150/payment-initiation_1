@@ -3,31 +3,39 @@ package com.hiberus.payment_initiation.infrastructure.config;
 import com.hiberus.payment_initiation.application.usecase.CreatePaymentOrderUseCase;
 import com.hiberus.payment_initiation.application.usecase.GetPaymentOrderUseCase;
 import com.hiberus.payment_initiation.domain.port.PaymentOrderRepository;
-import com.hiberus.payment_initiation.infrastructure.persistence.PaymentOrderPersistenceAdapter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import com.hiberus.payment_initiation.infrastructure.persistence.InMemoryPaymentOrderRepository;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 /**
- * Central location for Spring beans wiring adapters to domain ports.
+ * Test configuration that provides in-memory implementations for integration tests.
+ * This configuration replaces ApplicationConfig for testing purposes.
  */
-@Configuration
-public class ApplicationConfig {
+@TestConfiguration
+public class TestConfig {
+
+	private final InMemoryPaymentOrderRepository repository = new InMemoryPaymentOrderRepository();
 
 	@Bean
-	@ConditionalOnMissingBean
+	@Primary
 	public PaymentOrderRepository paymentOrderRepository() {
-		return new PaymentOrderPersistenceAdapter();
+		return repository;
 	}
 
 	@Bean
-	@ConditionalOnMissingBean
+	public InMemoryPaymentOrderRepository inMemoryPaymentOrderRepository() {
+		return repository;
+	}
+
+	@Bean
+	@Primary
 	public CreatePaymentOrderUseCase createPaymentOrderUseCase(PaymentOrderRepository paymentOrderRepository) {
 		return new CreatePaymentOrderUseCase(paymentOrderRepository);
 	}
 
 	@Bean
-	@ConditionalOnMissingBean
+	@Primary
 	public GetPaymentOrderUseCase getPaymentOrderUseCase(PaymentOrderRepository paymentOrderRepository) {
 		return new GetPaymentOrderUseCase(paymentOrderRepository);
 	}
