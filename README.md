@@ -26,5 +26,6 @@ La prueba requiere evidenciar asistencia de IA. Este repositorio almacena prompt
 | --- | --- | --- | --- | --- | --- |
 | AI-001 | Cursor (GPT-5.1) | Definir estructura base del microservicio hexagonal | `pom.xml`, skeletons Java, `.gitignore`, `README.md`, `ai/*` | Se generó pom mínimo, estructura de paquetes y documentación inicial | Ajustes menores de comentarios y TODOs |
 | AI-002 | ChatGPT | Reservado para próximas iteraciones | TBD | TBD | TBD |
+| P-002 | Cursor | Generar contrato OpenAPI 3.0 para Payment Initiation / PaymentOrder | `openapi/payment-initiation.yaml`, `ai/prompts.md`, `ai/decisions.md`, `ai/generations/openapi-payment-initiation-initial.yaml` | Se produjo el borrador del contrato listo para openapi-generator e integración REST | Pendiente revisión de campos y validaciones según necesidades del negocio |
 
 > Nota: Actualizar la tabla conforme se ejecuten nuevos prompts y se apliquen correcciones manuales.

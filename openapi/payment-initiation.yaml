@@ -1,0 +1,274 @@
+openapi: 3.0.3
+info:
+  title: Payment Initiation API
+  version: 1.0.0
+  description: >
+    API contract-first para gestión de órdenes de pago alineada con BIAN Payment
+    Initiation / PaymentOrder.
+servers:
+  - url: http://localhost:8080
+    description: Local environment
+tags:
+  - name: PaymentOrders
+    description: Operaciones relacionadas con la gestión de Payment Orders.
+paths:
+  /payment-initiation/payment-orders:
+    post:
+      tags:
+        - PaymentOrders
+      operationId: initiatePaymentOrder
+      summary: Inicia una nueva orden de pago.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentOrderInitiationRequest'
+      responses:
+        '201':
+          description: Payment Order creada exitosamente.
+          headers:
+            Location:
+              description: URL del recurso recién creado.
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentOrderResource'
+        '400':
+          description: Error de validación en la solicitud.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Reglas de negocio incumplidas (ej. cuentas inválidas, fondos insuficientes).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error inesperado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /payment-initiation/payment-orders/{id}:
+    get:
+      tags:
+        - PaymentOrders
+      operationId: getPaymentOrderById
+      summary: Recupera una orden de pago por identificador.
+      parameters:
+        - $ref: '#/components/parameters/PaymentOrderId'
+      responses:
+        '200':
+          description: Payment Order encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentOrderResource'
+        '404':
+          description: Payment Order no encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error inesperado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /payment-initiation/payment-orders/{id}/status:
+    get:
+      tags:
+        - PaymentOrders
+      operationId: getPaymentOrderStatusById
+      summary: Recupera el estado de una orden de pago.
+      parameters:
+        - $ref: '#/components/parameters/PaymentOrderId'
+      responses:
+        '200':
+          description: Estado encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentOrderStatusResource'
+        '404':
+          description: Payment Order o estado no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error inesperado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  parameters:
+    PaymentOrderId:
+      name: id
+      in: path
+      description: Identificador único de la Payment Order.
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+  schemas:
+    PaymentOrderInitiationRequest:
+      type: object
+      description: Comando para solicitar la creación de una Payment Order.
+      required:
+        - debtorAccount
+        - creditorAccount
+        - amount
+        - requestedExecutionDate
+        - endToEndId
+      properties:
+        debtorAccount:
+          $ref: '#/components/schemas/AccountIdentification'
+        creditorAccount:
+          $ref: '#/components/schemas/AccountIdentification'
+        amount:
+          $ref: '#/components/schemas/Amount'
+        requestedExecutionDate:
+          type: string
+          format: date
+          description: Fecha solicitada para la ejecución del pago (ISO-8601).
+        remittanceInformation:
+          type: string
+          description: Información adicional suministrada por el ordenante.
+          maxLength: 140
+        endToEndId:
+          type: string
+          description: Identificador de referencia del cliente para trazabilidad completa.
+          minLength: 1
+          maxLength: 35
+    PaymentOrderResource:
+      type: object
+      description: Representación externa de una Payment Order.
+      required:
+        - id
+        - endToEndId
+        - status
+        - debtorAccount
+        - creditorAccount
+        - amount
+        - creationDateTime
+      properties:
+        id:
+          type: string
+          description: Identificador interno de la Payment Order.
+          example: PO-202411-0001
+        endToEndId:
+          type: string
+          description: Identificador de referencia del cliente.
+        status:
+          $ref: '#/components/schemas/PaymentOrderStatus'
+        debtorAccount:
+          $ref: '#/components/schemas/AccountIdentification'
+        creditorAccount:
+          $ref: '#/components/schemas/AccountIdentification'
+        amount:
+          $ref: '#/components/schemas/Amount'
+        requestedExecutionDate:
+          type: string
+          format: date
+        remittanceInformation:
+          type: string
+        creationDateTime:
+          type: string
+          format: date-time
+          description: Fecha/hora de creación en el sistema.
+        lastUpdatedDateTime:
+          type: string
+          format: date-time
+          description: Última fecha/hora de actualización.
+    PaymentOrderStatusResource:
+      type: object
+      description: Representación del estado de una Payment Order.
+      required:
+        - id
+        - status
+        - lastUpdatedDateTime
+      properties:
+        id:
+          type: string
+          description: Identificador de la Payment Order.
+        status:
+          $ref: '#/components/schemas/PaymentOrderStatus'
+        statusReason:
+          type: string
+          description: Explicación del estado actual.
+        lastUpdatedDateTime:
+          type: string
+          format: date-time
+          description: Momento de la última actualización del estado.
+    AccountIdentification:
+      type: object
+      description: Identificación de cuentas involucradas en la orden de pago.
+      required:
+        - accountNumber
+      properties:
+        accountNumber:
+          type: string
+          description: Número de cuenta o IBAN del participante.
+          minLength: 8
+          maxLength: 34
+        schemeName:
+          type: string
+          description: Esquema de identificación (ej. IBAN, BBAN).
+          maxLength: 16
+    Amount:
+      type: object
+      description: Monto monetario asociado a la orden.
+      required:
+        - currency
+        - amount
+      properties:
+        currency:
+          type: string
+          description: Código de moneda ISO-4217.
+          minLength: 3
+          maxLength: 3
+          pattern: '^[A-Z]{3}$'
+        amount:
+          type: number
+          format: double
+          description: Valor monetario con hasta 2 decimales.
+          minimum: 0.01
+          multipleOf: 0.01
+    PaymentOrderStatus:
+      type: string
+      description: Ciclo de vida de la Payment Order.
+      enum:
+        - INITIATED
+        - PENDING
+        - ACCEPTED
+        - REJECTED
+        - SETTLED
+    ErrorResponse:
+      type: object
+      description: Mensaje estándar de error.
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Código interno o estandarizado del error.
+        message:
+          type: string
+          description: Descripción legible para el cliente.
+        details:
+          type: array
+          description: Lista opcional con detalles adicionales del error.
+          items:
+            type: string
+

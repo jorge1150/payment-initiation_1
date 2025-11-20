@@ -20,3 +20,12 @@ Este documento centraliza los prompts utilizados durante el desarrollo del servi
 - **Archivos generados/modificados:** 
 - **Correcciones manuales:** 
 
+## P-002 – Generación contrato OpenAPI Payment Initiation
+- **Fecha:** YYYY-MM-DD
+- **Herramienta:** Cursor
+- **Contexto:** Elaborar el contrato OpenAPI 3.0 para el microservicio Payment Initiation / PaymentOrder tomando como referencia el WSDL legado y las guías BIAN.
+- **Prompt:** Solicitud para definir paths POST/GET, modelos y errores estándar, asegurando compatibilidad con openapi-generator (spring, interfaceOnly, bean validation, Java 17).
+- **Resumen de la respuesta:** Se generó `openapi/payment-initiation.yaml` con los recursos `PaymentOrderInitiationRequest`, `PaymentOrderResource`, `PaymentOrderStatusResource`, y se creó una copia inicial en `ai/generations/`.
+- **Archivos generados/modificados:** `openapi/payment-initiation.yaml`, `ai/generations/openapi-payment-initiation-initial.yaml`, `ai/prompts.md`, `ai/decisions.md`, `README.md`.
+- **Correcciones manuales:** Pendiente completar según revisión humana.
+
