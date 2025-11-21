@@ -2,12 +2,40 @@
   "info": {
     "name": "Payment Initiation - PaymentOrder (BIAN)",
     "_postman_id": "f0b12345-6789-4abc-def0-111213141516",
-    "description": "Colección mínima para validar el microservicio migrado (sin SOAP).",
+    "description": "Colección para validar el microservicio Payment Initiation API. Ejecutar las requests en orden: POST -> GET -> GET Status.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "paymentOrderId",
+      "value": "",
+      "type": "string"
+    }
+  ],
   "item": [
     {
       "name": "POST Initiate PaymentOrder",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Save the payment order ID from the response",
+              "if (pm.response.code === 201) {",
+              "    const responseJson = pm.response.json();",
+              "    pm.collectionVariables.set(\"paymentOrderId\", responseJson.id);",
+              "    console.log(\"Payment Order ID saved: \" + responseJson.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [
@@ -16,62 +44,236 @@
             "value": "application/json"
           }
         ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"endToEndId\": \"E2E-20251121-0001\",\n  \"debtorAccount\": {\n    \"accountNumber\": \"ES9121000418450200051332\",\n    \"schemeName\": \"IBAN\"\n  },\n  \"creditorAccount\": {\n    \"accountNumber\": \"ES9800550000000000000000\",\n    \"schemeName\": \"IBAN\"\n  },\n  \"amount\": {\n    \"currency\": \"EUR\",\n    \"amount\": 100.50\n  },\n  \"requestedExecutionDate\": \"2025-11-22\",\n  \"remittanceInformation\": \"Pago factura 123\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
         "url": {
-          "raw": "http://localhost:8080/payment-initiation/payment-orders",
-          "protocol": "http",
+          "raw": "{{baseUrl}}/payment-initiation/payment-orders",
           "host": [
-            "localhost"
+            "{{baseUrl}}"
           ],
-          "port": "8080",
           "path": [
             "payment-initiation",
             "payment-orders"
           ]
         },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"externalReference\": \"EXT-1\",\n  \"debtorAccount\": { \"iban\": \"EC12DEBTOR\" },\n  \"creditorAccount\": { \"iban\": \"EC98CREDITOR\" },\n  \"instructedAmount\": { \"amount\": 150.75, \"currency\": \"USD\" },\n  \"remittanceInformation\": \"Factura 001-123\",\n  \"requestedExecutionDate\": \"2025-10-31\"\n}"
+        "description": "Crea una nueva orden de pago. El ID generado se guarda automáticamente en la variable `paymentOrderId` para usar en las siguientes requests."
+      },
+      "response": [
+        {
+          "name": "201 Created - Payment Order",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"endToEndId\": \"E2E-20251121-0001\",\n  \"debtorAccount\": {\n    \"accountNumber\": \"ES9121000418450200051332\",\n    \"schemeName\": \"IBAN\"\n  },\n  \"creditorAccount\": {\n    \"accountNumber\": \"ES9800550000000000000000\",\n    \"schemeName\": \"IBAN\"\n  },\n  \"amount\": {\n    \"currency\": \"EUR\",\n    \"amount\": 100.50\n  },\n  \"requestedExecutionDate\": \"2025-11-22\",\n  \"remittanceInformation\": \"Pago factura 123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payment-initiation/payment-orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payment-initiation",
+                "payment-orders"
+              ]
+            }
+          },
+          "status": "Created",
+          "code": 201,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Location",
+              "value": "/payment-initiation/payment-orders/PO-ABC12345"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"id\": \"PO-ABC12345\",\n  \"endToEndId\": \"E2E-20251121-0001\",\n  \"status\": \"INITIATED\",\n  \"debtorAccount\": {\n    \"accountNumber\": \"ES9121000418450200051332\",\n    \"schemeName\": \"IBAN\"\n  },\n  \"creditorAccount\": {\n    \"accountNumber\": \"ES9800550000000000000000\",\n    \"schemeName\": \"IBAN\"\n  },\n  \"amount\": {\n    \"currency\": \"EUR\",\n    \"amount\": 100.50\n  },\n  \"requestedExecutionDate\": \"2025-11-22\",\n  \"remittanceInformation\": \"Pago factura 123\",\n  \"creationDateTime\": \"2025-11-21T10:30:00Z\",\n  \"lastUpdatedDateTime\": \"2025-11-21T10:30:00Z\"\n}"
         }
-      }
+      ]
     },
     {
       "name": "GET Retrieve PaymentOrder",
       "request": {
         "method": "GET",
+        "header": [],
         "url": {
-          "raw": "http://localhost:8080/payment-initiation/payment-orders/PO-0001",
-          "protocol": "http",
+          "raw": "{{baseUrl}}/payment-initiation/payment-orders/{{paymentOrderId}}",
           "host": [
-            "localhost"
+            "{{baseUrl}}"
           ],
-          "port": "8080",
           "path": [
             "payment-initiation",
             "payment-orders",
-            "PO-0001"
+            "{{paymentOrderId}}"
           ]
+        },
+        "description": "Recupera una orden de pago por su ID. Usa la variable `paymentOrderId` que se guarda automáticamente después del POST."
+      },
+      "response": [
+        {
+          "name": "200 OK - Payment Order",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payment-initiation/payment-orders/{{paymentOrderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payment-initiation",
+                "payment-orders",
+                "{{paymentOrderId}}"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"id\": \"PO-ABC12345\",\n  \"endToEndId\": \"E2E-20251121-0001\",\n  \"status\": \"INITIATED\",\n  \"debtorAccount\": {\n    \"accountNumber\": \"ES9121000418450200051332\",\n    \"schemeName\": \"IBAN\"\n  },\n  \"creditorAccount\": {\n    \"accountNumber\": \"ES9800550000000000000000\",\n    \"schemeName\": \"IBAN\"\n  },\n  \"amount\": {\n    \"currency\": \"EUR\",\n    \"amount\": 100.50\n  },\n  \"requestedExecutionDate\": \"2025-11-22\",\n  \"remittanceInformation\": \"Pago factura 123\",\n  \"creationDateTime\": \"2025-11-21T10:30:00Z\",\n  \"lastUpdatedDateTime\": \"2025-11-21T10:30:00Z\"\n}"
+        },
+        {
+          "name": "404 Not Found",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payment-initiation/payment-orders/NON_EXISTENT_ID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payment-initiation",
+                "payment-orders",
+                "NON_EXISTENT_ID"
+              ]
+            }
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"timestamp\": \"2025-11-21T10:30:00Z\",\n  \"status\": 404,\n  \"error\": \"Not Found\",\n  \"path\": \"/payment-initiation/payment-orders/NON_EXISTENT_ID\"\n}"
         }
-      }
+      ]
     },
     {
       "name": "GET Retrieve PaymentOrder Status",
       "request": {
         "method": "GET",
+        "header": [],
         "url": {
-          "raw": "http://localhost:8080/payment-initiation/payment-orders/PO-0001/status",
-          "protocol": "http",
+          "raw": "{{baseUrl}}/payment-initiation/payment-orders/{{paymentOrderId}}/status",
           "host": [
-            "localhost"
+            "{{baseUrl}}"
           ],
-          "port": "8080",
           "path": [
             "payment-initiation",
             "payment-orders",
-            "PO-0001",
+            "{{paymentOrderId}}",
             "status"
           ]
+        },
+        "description": "Recupera el estado de una orden de pago por su ID. Usa la variable `paymentOrderId` que se guarda automáticamente después del POST."
+      },
+      "response": [
+        {
+          "name": "200 OK - Payment Order Status",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payment-initiation/payment-orders/{{paymentOrderId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payment-initiation",
+                "payment-orders",
+                "{{paymentOrderId}}",
+                "status"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"id\": \"PO-ABC12345\",\n  \"status\": \"INITIATED\",\n  \"lastUpdatedDateTime\": \"2025-11-21T10:30:00Z\"\n}"
+        },
+        {
+          "name": "404 Not Found",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payment-initiation/payment-orders/NON_EXISTENT_ID/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payment-initiation",
+                "payment-orders",
+                "NON_EXISTENT_ID",
+                "status"
+              ]
+            }
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"timestamp\": \"2025-11-21T10:30:00Z\",\n  \"status\": 404,\n  \"error\": \"Not Found\",\n  \"path\": \"/payment-initiation/payment-orders/NON_EXISTENT_ID/status\"\n}"
         }
-      }
+      ]
     }
   ]
 }

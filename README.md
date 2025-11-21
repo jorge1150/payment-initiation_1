@@ -71,6 +71,84 @@ El servicio se ejecuta con el perfil `docker` activo. Se pueden configurar varia
 - Los tests se omiten durante el build de Docker (`-DskipTests`) ya que se ejecutan en CI/CD.
 - Se pueden añadir servicios adicionales (bases de datos, mocks SOAP, etc.) al `docker-compose.yml` en el futuro.
 
+### Pruebas con Postman
+
+El proyecto incluye una colección de Postman (`postman_collection.json`) para probar los endpoints del API.
+
+#### Importar la colección
+
+1. Abrir Postman
+2. Click en **Import**
+3. Seleccionar el archivo `postman_collection.json` de la raíz del proyecto
+
+#### Ejecutar las pruebas
+
+**Orden recomendado de ejecución:**
+
+1. **POST Initiate PaymentOrder**: Crea una nueva orden de pago
+   - El ID generado se guarda automáticamente en la variable `paymentOrderId`
+   - Verifica que el status code sea `201 Created`
+   - **Ejemplo de body JSON:**
+     ```json
+     {
+       "endToEndId": "E2E-20251121-0001",
+       "debtorAccount": {
+         "accountNumber": "ES9121000418450200051332",
+         "schemeName": "IBAN"
+       },
+       "creditorAccount": {
+         "accountNumber": "ES9800550000000000000000",
+         "schemeName": "IBAN"
+       },
+       "amount": {
+         "currency": "EUR",
+         "amount": 100.50
+       },
+       "requestedExecutionDate": "2025-11-22",
+       "remittanceInformation": "Pago factura 123"
+     }
+     ```
+
+2. **GET Retrieve PaymentOrder**: Recupera la orden creada usando el ID guardado
+   - Usa automáticamente la variable `{{paymentOrderId}}` del paso anterior
+   - Verifica que el status code sea `200 OK` y que los datos coincidan
+
+3. **GET Retrieve PaymentOrder Status**: Recupera el estado de la orden
+   - Usa automáticamente la variable `{{paymentOrderId}}`
+   - Verifica que el status code sea `200 OK` y que el estado sea `INITIATED`
+
+#### Variables de la colección
+
+- `baseUrl`: URL base del servicio (por defecto: `http://localhost:8080`)
+- `paymentOrderId`: ID de la orden de pago (se guarda automáticamente después del POST)
+
+#### Verificar logs del servicio
+
+Para ver los logs del controlador cuando se ejecutan las requests desde Postman:
+
+```bash
+# Si el servicio está corriendo en Docker
+docker logs -f payment-initiation-service
+
+# O si está corriendo localmente, los logs aparecerán en la consola
+```
+
+Los logs mostrarán:
+- `Received initiatePaymentOrder request`: cuando se recibe una petición POST
+- `Payment order created successfully`: cuando se crea exitosamente una orden
+- `Received getPaymentOrderById request`: cuando se consulta una orden por ID
+- `Received getPaymentOrderStatusById request`: cuando se consulta el estado de una orden
+
+#### Notas
+
+- Asegúrate de que el servicio esté corriendo en `http://localhost:8080` antes de ejecutar las requests
+- La colección incluye ejemplos de request/response para cada endpoint
+- Los ejemplos de error (404 Not Found) están incluidos para referencia
+- Las URLs están configuradas según el contrato OpenAPI:
+  - `POST /payment-initiation/payment-orders`
+  - `GET /payment-initiation/payment-orders/{id}`
+  - `GET /payment-initiation/payment-orders/{id}/status`
+
 ### Generación de código desde OpenAPI
 - Ejecutar `mvn clean generate-sources` para regenerar las interfaces y modelos bajo `target/generated-sources/openapi`.
 - Cualquier comando que dispare `generate-sources` (ej. `mvn compile`, `mvn test`) generará automáticamente el código antes de compilar.
@@ -112,5 +190,7 @@ La prueba requiere evidenciar asistencia de IA. Este repositorio almacena prompt
 | P-010 | Cursor | Crear pruebas de integración REST con WebTestClient para los endpoints de Payment Initiation | `pom.xml`, `InMemoryPaymentOrderRepository.java`, `TestConfig.java`, `PaymentInitiationIntegrationTest.java`, `ai/*` | La IA ayudó a generar la estructura de los tests de integración y a alinearlos con el contrato OpenAPI. Se añadió `spring-boot-starter-webflux` como dependencia de test, se creó un repositorio in-memory para los tests, y se implementaron pruebas de integración con WebTestClient que cubren los tres endpoints principales (POST, GET /{id}, GET /{id}/status) incluyendo casos felices y casos de error (404). Los tests validan que los campos principales coinciden con el contrato y que los códigos de estado son correctos | Afinado de casos de prueba y datos según las reglas de negocio, y añadir más escenarios para validaciones específicas |
 | P-011 | Cursor | Estabilizar `mvn clean verify` corrigiendo tests e integración | `ApplicationConfig.java`, `TestConfig.java`, `PaymentInitiationApplicationTest.java`, `PaymentInitiationIntegrationTest.java`, `ai/*` | La IA ayudó a diagnosticar y corregir fallos de tests hasta tener una build verde. Se identificaron tres problemas principales: conflicto de beans entre `ApplicationConfig` y `TestConfig`, test que esperaba excepción que no se lanzaba, y repositorio in-memory que no persistía correctamente. Se corrigieron usando `@ConditionalOnMissingBean` en `ApplicationConfig`, ajustando el test de aplicación, y asegurando que `TestConfig` use un singleton del repositorio. Tras las correcciones, `mvn clean verify` pasa exitosamente con 22 tests (0 errores, 0 fallos) cumpliendo JaCoCo (≥80%), Checkstyle y SpotBugs | Ninguna. Todos los problemas se resolvieron mediante ajustes en la configuración |
 | P-012 | Cursor | Generar Dockerfile multi-stage, docker-compose y .dockerignore para el servicio | `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `README.md`, `ai/*` | La IA ayudó a diseñar una estrategia de contenerización alineada con buenas prácticas (multi-stage y perfil docker), documentando además los comandos de ejecución. Se creó un Dockerfile multi-stage (builder con Maven + runtime con JRE Alpine), un docker-compose.yml básico con red bridge, y un .dockerignore para optimizar el contexto de build. El Dockerfile usa `mvn clean package -DskipTests` para construir el jar y lo empaqueta en una imagen ligera con JRE Alpine | Ajustar configuraciones específicas de entorno según el despliegue real (cloud/on-premise), y añadir servicios adicionales (bases de datos, mocks) al docker-compose cuando sea necesario |
+| P-013 | Cursor | Validar y corregir la colección Postman para probar POST/GET/status según contrato | `postman_collection.json`, `ai/*`, `README.md` | La IA ayudó a detectar campos faltantes y a estructurar un flujo de pruebas reproducible en Postman. Se corrigió la colección para usar los nombres exactos de campos del contrato OpenAPI (`accountNumber` en lugar de `iban`, `endToEndId` en lugar de `externalReference`, `amount` en lugar de `instructedAmount`). Se añadieron variables de colección (`baseUrl`, `paymentOrderId`), scripts de test para guardar automáticamente el ID después del POST, y ejemplos de request/response para cada endpoint. La colección ahora permite ejecutar un flujo completo: POST crea la orden y guarda el ID, GET recupera la orden usando el ID guardado, GET status recupera el estado usando el mismo ID | Ajustes de ejemplos o variables según entornos (desarrollo, testing, producción) |
+| P-014 | Cursor | Corrección de 404 en GET después de POST (repositorio de PaymentOrder) | `PaymentOrderPersistenceAdapter.java`, `PaymentInitiationIntegrationTest.java`, `ai/*` | La IA ayudó a identificar que `PaymentOrderPersistenceAdapter` no implementaba el almacenamiento (métodos `save()` y `findById()` eran placeholders). Se corrigió para usar un `ConcurrentHashMap<String, PaymentOrder>` como almacenamiento in-memory, implementando correctamente `save()` para guardar por `paymentOrder.getId()` y `findById()` para buscar por el mismo ID. Se añadió logging de debug y un test de integración que valida el flujo completo end-to-end (POST → GET → GET status). Tras las correcciones, los GET ahora encuentran correctamente las órdenes creadas | Ninguna. El problema se resolvió implementando correctamente el almacenamiento in-memory |
 
 > Nota: Actualizar la tabla conforme se ejecuten nuevos prompts y se apliquen correcciones manuales.

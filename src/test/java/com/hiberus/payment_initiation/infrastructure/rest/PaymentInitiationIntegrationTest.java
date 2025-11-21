@@ -173,6 +173,49 @@ class PaymentInitiationIntegrationTest {
 				.expectStatus().isNotFound();
 	}
 
+	@Test
+	void shouldCompleteFullFlowPostGetGetStatus() {
+		// Given - Create a payment order
+		PaymentOrderInitiationRequest request = createValidPaymentOrderRequest();
+		PaymentOrderResource createdOrder = webTestClient.post()
+				.uri("/payment-initiation/payment-orders")
+				.contentType(MediaType.APPLICATION_JSON)
+				.bodyValue(request)
+				.exchange()
+				.expectStatus().isCreated()
+				.expectBody(PaymentOrderResource.class)
+				.returnResult()
+				.getResponseBody();
+
+		assertThat(createdOrder).isNotNull();
+		String orderId = createdOrder.getId();
+		assertThat(orderId).isNotNull().startsWith("PO-");
+
+		// When & Then - Retrieve the created order by ID
+		webTestClient.get()
+				.uri("/payment-initiation/payment-orders/{id}", orderId)
+				.exchange()
+				.expectStatus().isOk()
+				.expectBody(PaymentOrderResource.class)
+				.value(paymentOrder -> {
+					assertThat(paymentOrder.getId()).isEqualTo(orderId);
+					assertThat(paymentOrder.getStatus()).isEqualTo(PaymentOrderStatus.INITIATED);
+					assertThat(paymentOrder.getEndToEndId()).isEqualTo(request.getEndToEndId());
+				});
+
+		// When & Then - Retrieve the status of the created order
+		webTestClient.get()
+				.uri("/payment-initiation/payment-orders/{id}/status", orderId)
+				.exchange()
+				.expectStatus().isOk()
+				.expectBody(PaymentOrderStatusResource.class)
+				.value(statusResource -> {
+					assertThat(statusResource.getId()).isEqualTo(orderId);
+					assertThat(statusResource.getStatus()).isEqualTo(PaymentOrderStatus.INITIATED);
+					assertThat(statusResource.getLastUpdatedDateTime()).isNotNull();
+				});
+	}
+
 	/**
 	 * Creates a valid PaymentOrderInitiationRequest for testing.
 	 *
