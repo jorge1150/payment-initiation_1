@@ -9,13 +9,6 @@ Este registro documenta decisiones de diseño evaluadas junto con la IA. Cada en
 - **Motivo de la decisión:** Facilita iteraciones rápidas en la prueba técnica y mantiene claridad de responsabilidades.
 - **Impacto en la arquitectura/código:** Base estandarizada que permitirá acoplar OpenAPI contract-first y adaptadores SOAP en fases posteriores.
 
-## D-00X – _Título de la decisión_
-- **Contexto:** 
-- **Alternativas sugeridas por IA:** 
-- **Decisión tomada:** 
-- **Motivo de la decisión:** 
-- **Impacto en la arquitectura/código:** 
-
 ## D-002 – Diseño del contrato OpenAPI para Payment Initiation / PaymentOrder
 - **Contexto:** Necesidad de definir un contrato REST contract-first que sustituya al servicio SOAP heredado y respete el dominio BIAN Payment Order.
 - **Alternativas sugeridas por IA:** Estructuras de recursos separados para la orden completa y para el estado, inclusión de Problem Details genérico, uso de parámetros reutilizables y esquemas `AccountIdentification`/`Amount`.
