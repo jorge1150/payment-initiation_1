@@ -112,3 +112,12 @@ Este documento centraliza los prompts utilizados durante el desarrollo del servi
 - **Archivos generados/modificados:** `ApplicationConfig.java`, `TestConfig.java`, `PaymentInitiationApplicationTest.java`, `PaymentInitiationIntegrationTest.java`, `ai/prompts.md`, `ai/decisions.md`, `README.md`.
 - **Correcciones manuales:** Ninguna. Todos los problemas se resolvieron mediante ajustes en la configuración de beans y tests.
 
+## P-012 – Dockerfile multi-stage y docker-compose
+- **Fecha:** YYYY-MM-DD
+- **Herramienta:** Cursor
+- **Contexto:** Se necesitaba contenerizar el servicio payment-initiation-service con un Dockerfile multi-stage y docker-compose mínimo para cumplir con los requisitos de la prueba técnica y facilitar el despliegue del servicio.
+- **Prompt:** Solicitud para crear un Dockerfile multi-stage (builder + runtime), un docker-compose.yml básico y un .dockerignore, además de actualizar el README con instrucciones de ejecución con Docker, asegurando que no se rompa el pipeline de Maven.
+- **Resumen de la respuesta:** Se creó un Dockerfile multi-stage con dos etapas: builder usando `maven:3.9.9-eclipse-temurin-17` para construir el jar con `mvn clean package -DskipTests`, y runtime usando `eclipse-temurin:17-jre-alpine` para una imagen ligera. El jar se copia y renombra a `app.jar` para simplificar. Se creó un `docker-compose.yml` con el servicio `payment-initiation-service` exponiendo el puerto 8080, configurando el perfil `docker` y una red bridge `payment-net`. Se creó un `.dockerignore` para excluir archivos innecesarios del contexto de build (target/, .git/, IDEs, etc.). Se actualizó el README con una sección completa de "Ejecución con Docker" incluyendo comandos de build, arranque y variables de entorno.
+- **Archivos generados/modificados:** `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `README.md`, `ai/prompts.md`, `ai/decisions.md`.
+- **Correcciones manuales:** Ajustar puertos, variables de entorno o configuración de perfiles según necesidades futuras. Añadir servicios adicionales (bases de datos, mocks SOAP) al docker-compose cuando sea necesario.
+

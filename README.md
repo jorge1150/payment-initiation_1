@@ -16,8 +16,60 @@ El servicio sigue arquitectura hexagonal y principios SOLID/Clean Architecture:
 - TODO: incluir comando definitivo (`./mvnw spring-boot:run` u otro) una vez se agreguen los módulos necesarios.
 
 ### Ejecución con Docker
-- TODO: agregar Dockerfile y docker-compose que orquesten dependencias (bases de datos simuladas, SOAP mock, etc.).
-- TODO: documentar variables de entorno y estándares de observabilidad.
+
+El servicio puede ejecutarse usando Docker con un Dockerfile multi-stage y docker-compose.
+
+#### Prerequisitos
+- Docker Engine 20.10+
+- Docker Compose 2.0+
+
+#### Build de la imagen
+
+Para construir la imagen Docker:
+
+```bash
+docker build -t payment-initiation-service .
+```
+
+#### Arranque con docker-compose
+
+Para construir y arrancar el servicio:
+
+```bash
+docker-compose up --build
+```
+
+Para ejecutarlo en segundo plano:
+
+```bash
+docker-compose up -d --build
+```
+
+Para detener el servicio:
+
+```bash
+docker-compose down
+```
+
+#### Endpoints
+
+Una vez arrancado, el servicio estará disponible en:
+
+- **Base URL**: `http://localhost:8080`
+- **Payment Orders API**: `http://localhost:8080/payment-initiation/payment-orders`
+
+#### Variables de entorno
+
+El servicio se ejecuta con el perfil `docker` activo. Se pueden configurar variables de entorno adicionales en `docker-compose.yml`:
+
+- `SPRING_PROFILES_ACTIVE`: Perfil de Spring Boot (por defecto: `docker`)
+- `JAVA_OPTS`: Opciones JVM (por ejemplo: `-Xmx512m -Xms256m`)
+
+#### Notas
+
+- El Dockerfile usa un build multi-stage para optimizar el tamaño de la imagen final.
+- Los tests se omiten durante el build de Docker (`-DskipTests`) ya que se ejecutan en CI/CD.
+- Se pueden añadir servicios adicionales (bases de datos, mocks SOAP, etc.) al `docker-compose.yml` en el futuro.
 
 ### Generación de código desde OpenAPI
 - Ejecutar `mvn clean generate-sources` para regenerar las interfaces y modelos bajo `target/generated-sources/openapi`.
@@ -59,5 +111,6 @@ La prueba requiere evidenciar asistencia de IA. Este repositorio almacena prompt
 | P-009 | Cursor | Ajuste de tests tras refactor de dominio y controlador | `PaymentOrderRestControllerTest.java`, `SoapAdapterTest.java`, `ai/*` | Se actualizaron los tests para usar la nueva firma del constructor de `PaymentOrdersController` (3 parámetros incluyendo `PaymentOrderRestMapper`) y se reemplazaron referencias a `PaymentOrderStatus.DRAFT` por `INITIATED` en los tests, alineándolos con los nuevos valores del enum. Los tests ahora verifican la lógica real del controlador en lugar de esperar NOT_IMPLEMENTED | Pendiente revisar el resultado final de `mvn clean verify` y ajustar asserts de negocio si fuera necesario |
 | P-010 | Cursor | Crear pruebas de integración REST con WebTestClient para los endpoints de Payment Initiation | `pom.xml`, `InMemoryPaymentOrderRepository.java`, `TestConfig.java`, `PaymentInitiationIntegrationTest.java`, `ai/*` | La IA ayudó a generar la estructura de los tests de integración y a alinearlos con el contrato OpenAPI. Se añadió `spring-boot-starter-webflux` como dependencia de test, se creó un repositorio in-memory para los tests, y se implementaron pruebas de integración con WebTestClient que cubren los tres endpoints principales (POST, GET /{id}, GET /{id}/status) incluyendo casos felices y casos de error (404). Los tests validan que los campos principales coinciden con el contrato y que los códigos de estado son correctos | Afinado de casos de prueba y datos según las reglas de negocio, y añadir más escenarios para validaciones específicas |
 | P-011 | Cursor | Estabilizar `mvn clean verify` corrigiendo tests e integración | `ApplicationConfig.java`, `TestConfig.java`, `PaymentInitiationApplicationTest.java`, `PaymentInitiationIntegrationTest.java`, `ai/*` | La IA ayudó a diagnosticar y corregir fallos de tests hasta tener una build verde. Se identificaron tres problemas principales: conflicto de beans entre `ApplicationConfig` y `TestConfig`, test que esperaba excepción que no se lanzaba, y repositorio in-memory que no persistía correctamente. Se corrigieron usando `@ConditionalOnMissingBean` en `ApplicationConfig`, ajustando el test de aplicación, y asegurando que `TestConfig` use un singleton del repositorio. Tras las correcciones, `mvn clean verify` pasa exitosamente con 22 tests (0 errores, 0 fallos) cumpliendo JaCoCo (≥80%), Checkstyle y SpotBugs | Ninguna. Todos los problemas se resolvieron mediante ajustes en la configuración |
+| P-012 | Cursor | Generar Dockerfile multi-stage, docker-compose y .dockerignore para el servicio | `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `README.md`, `ai/*` | La IA ayudó a diseñar una estrategia de contenerización alineada con buenas prácticas (multi-stage y perfil docker), documentando además los comandos de ejecución. Se creó un Dockerfile multi-stage (builder con Maven + runtime con JRE Alpine), un docker-compose.yml básico con red bridge, y un .dockerignore para optimizar el contexto de build. El Dockerfile usa `mvn clean package -DskipTests` para construir el jar y lo empaqueta en una imagen ligera con JRE Alpine | Ajustar configuraciones específicas de entorno según el despliegue real (cloud/on-premise), y añadir servicios adicionales (bases de datos, mocks) al docker-compose cuando sea necesario |
 
 > Nota: Actualizar la tabla conforme se ejecuten nuevos prompts y se apliquen correcciones manuales.
